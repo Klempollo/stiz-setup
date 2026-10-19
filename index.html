@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>STIZ · Setup Clément</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : une colonne de travail (max 760px) : actions stores, accès au code, décisions, récap. Charte du deck STIZ, sombre uniquement. */
+:root {
+  --bg: #0b0a0d;
+  --surface: #16141b;
+  --surface-2: #1f1c26;
+  --line: #2c2836;
+  --fg: #f2f0ea;
+  --muted: #a39eae;
+  --violet: #8b5cf6;
+  --violet-ink: #b9a2ff;
+  --yellow: #ffd600;
+  --on-accent: #0b0a0d;
+  --ok: #45d69a;
+  --warn: #ffb347;
+  --font-display: "Bungee", "Arial Black", Impact, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 40px 72px; display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.05; }
+h1 { font-size: clamp(30px, 7vw, 52px); }
+h2 { font-size: clamp(22px, 4.5vw, 30px); }
+h3 { font-size: 19px; }
+p { margin: 0; }
+a { color: var(--violet-ink); text-underline-offset: 3px; }
+code { font: 13px var(--font-mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--violet-ink); }
+.muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; border-radius: 6px; }
+
+/* En-tête */
+header { display: grid; gap: 16px; }
+.lede { font-size: 18px; max-width: 60ch; }
+.lede strong { color: var(--yellow); font-weight: 700; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.progress { flex: 1 1 240px; display: grid; gap: 8px; }
+.progress-label { font: 600 13px/1 var(--font-mono); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.bar { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--yellow); transition: width .35s ease; }
+.sync { font: 500 12px/1 var(--font-mono); letter-spacing: .04em; padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line); display: inline-flex; gap: 8px; align-items: center; }
+.sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.sync[data-s="live"]::before { background: var(--ok); }
+.sync[data-s="local"]::before, .sync[data-s="readonly"]::before { background: var(--warn); }
+.guard { border: 1px solid var(--line); border-left: 4px solid var(--yellow); border-radius: 8px; padding: 12px 16px; font-size: 15px; }
+
+/* Actions */
+.steps { display: grid; gap: 16px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 18px; transition: border-color .2s; }
+.step.done { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.step.done .n { color: var(--ok); }
+.n { font: 400 34px/1 var(--font-display); color: var(--yellow); grid-row: span 2; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.step-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 11px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; padding: 6px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.chip.who { background: var(--violet); border-color: var(--violet); color: var(--on-accent); font-weight: 600; }
+.step-body { display: grid; gap: 12px; padding-top: 10px; min-width: 0; }
+.step ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.why { font-size: 14px; color: var(--muted); }
+.unlocks { font: 500 12px/1.4 var(--font-mono); color: var(--violet-ink); }
+.tree { font: 13px/1.7 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; overflow-x: auto; white-space: pre; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
+.copy { font: 600 14px/1.2 var(--font-mono); color: var(--yellow); background: transparent; border: 1px dashed color-mix(in srgb, var(--yellow) 45%, transparent); border-radius: 6px; padding: 2px 6px; cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+.copy:hover { background: color-mix(in srgb, var(--yellow) 10%, transparent); }
+.copy.copied::after { content: " ✓ copié"; color: var(--ok); font-weight: 400; }
+.fields { display: grid; gap: 12px; }
+.field { display: grid; gap: 6px; font-size: 14px; }
+.field-warn { font: 500 12px/1.4 var(--font-mono); color: var(--warn); }
+select, input[type="text"] { font: 15px/1.3 var(--font-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; max-width: 100%; }
+.toggle { justify-self: start; display: inline-flex; align-items: center; gap: 10px; font: 700 15px/1 var(--font-body); padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); cursor: pointer; }
+.toggle .box { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--muted); display: grid; place-items: center; font-size: 12px; line-height: 1; }
+.toggle[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--on-accent); }
+.toggle[aria-pressed="true"] .box { border-color: var(--on-accent); }
+.toggle[aria-pressed="true"] .box::after { content: "✓"; }
+.toggle:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Décisions */
+.decisions { display: grid; gap: 12px; }
+.dec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: grid; gap: 10px; }
+.dec-q { display: flex; gap: 12px; align-items: baseline; font-weight: 700; }
+.dec-q span { font: 600 13px/1 var(--font-mono); color: var(--yellow); min-width: 1.2em; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { font: 500 14px/1.2 var(--font-body); padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; text-align: left; }
+.opt small { display: block; font: 500 10px/1.2 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.opt[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: var(--on-accent); }
+.opt[aria-pressed="true"] small { color: var(--on-accent); }
+.dec-answer { font: 500 12px/1.3 var(--font-mono); color: var(--muted); }
+.dec-answer b { color: var(--ok); font-weight: 600; }
+
+/* Hors périmètre + récap */
+.nope { display: flex; flex-wrap: wrap; gap: 8px; }
+.nope span { font-size: 14px; color: var(--muted); text-decoration: line-through; padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; }
+.recap { font: 13px/1.6 var(--font-mono); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.btn { font: 700 15px/1 var(--font-body); padding: 13px 18px; border-radius: 10px; border: 0; background: var(--yellow); color: var(--on-accent); cursor: pointer; justify-self: start; }
+.flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font: 600 13px/1 var(--font-mono); }
+.flow span { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); }
+.flow span:nth-of-type(3) { background: var(--violet); border-color: var(--violet); color: var(--on-accent); }
+.flow span:nth-of-type(4) { background: var(--yellow); border-color: var(--yellow); color: var(--on-accent); }
+.flow i { color: var(--muted); font-style: normal; }
+section { display: grid; gap: 16px; }
+footer { font: 12px/1.6 var(--font-mono); color: var(--muted); letter-spacing: .04em; }
+
+@media (max-width: 520px) {
+  .step { grid-template-columns: minmax(0, 1fr); }
+  .n { grid-row: auto; font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn.ghost { background: transparent; color: var(--yellow); border: 1px solid var(--yellow); text-decoration: none; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">STIZ · Fiches stores · Setup</p>
+    <h1>Louma, il reste <span id="h1-count">9</span> actions.</h1>
+    <p class="lede">Coche chaque action quand elle est faite et réponds aux 7 décisions. <strong>Clément voit tes réponses en direct</strong> : pas besoin de lui écrire à chaque étape.</p>
+    <div class="status">
+      <div class="progress">
+        <span class="progress-label" id="progress-label">0 / 9 actions faites · 0 / 7 décisions</span>
+        <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+      </div>
+      <span class="sync" id="sync" data-s="wait">Connexion…</span>
+    </div>
+    <p class="guard"><strong>Ne colle jamais de mot de passe ni de clé ici.</strong> Les mots de passe partent par SMS, les clés de dev par un lien à usage unique (action 08). Cette page ne reçoit que des cases cochées et des réponses.</p>
+  </header>
+
+  <section aria-labelledby="t-actions">
+    <p class="eyebrow">Fiches stores</p>
+    <h2 id="t-actions">5 actions pour démarrer</h2>
+    <div class="steps" id="steps-stores"></div>
+  </section>
+
+  <section aria-labelledby="t-dev">
+    <p class="eyebrow">Accès au code</p>
+    <h2 id="t-dev">4 actions pour coder</h2>
+    <p class="muted">Pour que Clément récupère le code de la webapp React, installe l'environnement iOS et Android sur son Mac et pousse son travail sur GitHub.</p>
+    <div class="steps" id="steps-dev"></div>
+  </section>
+
+  <section aria-labelledby="t-dec">
+    <p class="eyebrow">Les 7 décisions</p>
+    <h2 id="t-dec">Une réponse, ou le défaut</h2>
+    <p class="muted">Sans réponse, Clément part sur le défaut. Un clic suffit pour le valider.</p>
+    <div class="decisions" id="decisions"></div>
+  </section>
+
+  <section aria-labelledby="t-jira">
+    <p class="eyebrow">Pour info</p>
+    <h2 id="t-jira">Comment on travaille ensuite</h2>
+    <p>Jira : un board Kanban, <strong>3 epics</strong> qui suivent le découpage du brief (Textes, Visuels, Conformité). Pas de sprints. Clément configure les colonnes et les epics lui-même une fois invité.</p>
+    <div class="flow" aria-label="Chemin d'un ticket"><span>À faire</span><i>→</i><span>En cours</span><i>→</i><span>Revue Louma</span><i>→</i><span>Livré</span></div>
+    <p class="muted">« Livré » = le fichier est dans STIZ_Stores et sa ligne de la checklist du brief est cochée.</p>
+    <p>Code : une branche par ticket Jira (par exemple <code>STIZ-12-captures</code>), une pull request vers <code>main</code>. Tu valides avant chaque fusion : rien n'arrive en production sans toi.</p>
+    <p>Ce que Clément ne demande pas :</p>
+    <div class="nope"><span>Play Console</span><span>App Store Connect</span><span>Supabase prod</span><span>Stripe live</span><span>Vercel prod</span><span>Clés de signature, keystores</span><span>Admin des repos</span></div>
+  </section>
+
+  <section aria-labelledby="t-recap">
+    <p class="eyebrow">Récap</p>
+    <h2 id="t-recap">Où on en est</h2>
+    <p class="muted">Ce texte se met à jour tout seul. Si la synchro est indisponible, copie-le et envoie-le à Clément.</p>
+    <pre class="recap" id="recap"></pre>
+    <div class="btn-row">
+      <button class="btn" id="copy-recap" type="button">Copier le récap</button>
+      <a class="btn ghost" id="mail-recap" href="#">Envoyer par email</a>
+    </div>
+  </section>
+
+  <footer>STIZ · Onboarding fiches stores et accès dev · préparé par Clément Seuron · aucune donnée secrète ne transite par cette page</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Contenu : seule source de vérité ---------- */
+  var EMAIL = "clement@getstiz.com";
+  var GITHUB = "Klempollo";
+
+  function cp(v) { return '<button class="copy" type="button" data-copy="' + v + '">' + v + "</button>"; }
+
+  var STEPS = [
+    {
+      id: "s1", group: "stores", n: "01", title: "Créer l'email de Clément", dur: "5 min", tag: "En premier",
+      unlocks: "Débloque 02, 04 et 09",
+      items: [
+        "Crée l'adresse " + cp(EMAIL) + " dans l'admin de ta messagerie.",
+        "Envoie-lui le mot de passe temporaire <strong>par SMS</strong>, jamais ici."
+      ],
+      links: [{ label: "Google Workspace › Utilisateurs", href: "https://admin.google.com/ac/users" }],
+      why: "Un email au nom de STIZ pour le dossier, Jira et les échanges."
+    },
+    {
+      id: "s2", group: "stores", n: "02", title: "Créer le dossier partagé", dur: "10 min", tag: "En premier",
+      items: [
+        "Crée " + cp("STIZ_Stores") + " sur Drive ou Notion.",
+        "Partage-le <strong>en édition</strong> avec " + cp(EMAIL) + ".",
+        "Les sous-dossiers ci-dessous : crée-les, ou laisse Clément le faire."
+      ],
+      tree: "STIZ_Stores/\n├── 00_Decisions\n├── 01_Textes\n├── 02_Visuels\n├── 03_Questionnaires\n├── 04_Review_Apple\n└── 05_Liens",
+      links: [{ label: "Google Drive", href: "https://drive.google.com/drive/my-drive" }, { label: "Notion", href: "https://www.notion.so" }],
+      why: "Tous les livrables y arrivent. « Livré » veut dire « posé dans ce dossier »."
+    },
+    {
+      id: "s3", group: "stores", n: "03", title: "Ouvrir le compte de démo", dur: "15 min",
+      items: [
+        "Crée un compte STIZ rempli de données fictives.",
+        "Choisis ci-dessous comment Clément y accède."
+      ],
+      fields: [
+        { id: "access", label: "Accès de Clément au compte de démo", options: [
+          "Je lui envoie les identifiants par SMS",
+          "J'invite " + EMAIL + " sur le compte de démo",
+          "On le fait ensemble en visio"
+        ] }
+      ],
+      why: "Les 8 captures se font avec ce compte. Jamais de vraies données de skaters."
+    },
+    {
+      id: "s4", group: "stores", n: "04", title: "Inviter Clément sur Jira", dur: "5 min",
+      items: [
+        "Crée le projet " + cp("STIZ") + " (modèle Kanban, plan Free).",
+        "Invite " + cp(EMAIL) + " comme administrateur du projet."
+      ],
+      links: [{ label: "Atlassian : créer un site Jira gratuit", href: "https://www.atlassian.com/software/jira/free" }],
+      why: "Un seul endroit pour voir qui fait quoi, et où en est chaque livrable."
+    },
+    {
+      id: "s5", group: "stores", n: "05", title: "Trancher les 7 décisions", dur: "15 min",
+      items: ['Réponds aux 7 questions <a href="#t-dec">plus bas</a>. Clément les recopie dans 00_Decisions.'],
+      auto: true,
+      why: "Sans ces réponses, aucun texte définitif ne peut être écrit."
+    },
+    {
+      id: "s6", group: "dev", n: "06", title: "Ajouter Clément sur GitHub", dur: "5 min", tag: "En premier",
+      unlocks: "Débloque tout le reste du code",
+      items: [
+        "Pour chaque repo (webapp, app mobile) : <strong>Settings › Collaborators › Add people</strong>.",
+        "Invite " + cp(GITHUB) + ". Rôle <strong>Write</strong> si le repo est dans une organisation. Pas Admin.",
+        "Conseillé : <strong>Settings › Branches</strong>, protège <code>main</code> pour imposer une pull request validée par toi."
+      ],
+      links: [
+        { label: "GitHub : inviter un collaborateur", href: "https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-access-to-your-personal-repositories/inviting-collaborators-to-a-personal-repository" },
+        { label: "GitHub : protéger une branche", href: "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule" }
+      ],
+      why: "Clément lit le code, travaille sur des branches et propose ses changements par pull request. Gratuit, même sur un repo privé."
+    },
+    {
+      id: "s7", group: "dev", n: "07", title: "Décrire la stack", dur: "10 min",
+      items: ["Remplis ce que tu sais. « Je ne sais pas » est une bonne réponse : Clément le trouvera dans le code."],
+      fields: [
+        { id: "repoWeb", label: "Lien du repo de la webapp React", placeholder: "https://github.com/…" },
+        { id: "repoMobile", label: "Lien du repo de l'app mobile (ou « même repo »)", placeholder: "https://github.com/…" },
+        { id: "mobileStack", label: "Techno de l'app mobile", options: [
+          "Expo (React Native)", "React Native sans Expo", "Capacitor (webapp emballée)", "Flutter",
+          "Natif (Swift / Kotlin)", "Pas encore commencée", "Je ne sais pas"
+        ] },
+        { id: "pkg", label: "Gestionnaire de paquets", options: ["npm", "pnpm", "yarn", "bun", "Je ne sais pas"] },
+        { id: "bundle", label: "Identifiant de l'app (bundle iOS / package Android), s'il existe", placeholder: "com.getstiz.app" }
+      ],
+      why: "Pour installer le bon outillage sur son Mac (Xcode, Android Studio, simulateurs) sans deviner."
+    },
+    {
+      id: "s8", group: "dev", n: "08", title: "Transmettre les variables de dev", dur: "15 min",
+      items: [
+        "Vérifie qu'un fichier <code>.env.example</code> liste les <strong>noms</strong> des variables, sans valeurs, dans le repo.",
+        "Envoie les <strong>valeurs de dev</strong> par un lien à usage unique (Bitwarden Send, gratuit) ou par SMS. Jamais par email, Slack ou ici.",
+        "Clés de test uniquement : Stripe en mode test, Supabase en clé <code>anon</code>, idéalement sur un projet de dev. Pas de clé <code>service_role</code>, pas de clé live."
+      ],
+      fields: [
+        { id: "env", label: "Où en sont les variables ?", options: [
+          "Envoyées par Bitwarden Send", "Envoyées par SMS", "Pas de .env nécessaire", "On regarde ensemble en visio"
+        ] }
+      ],
+      links: [{ label: "Bitwarden Send", href: "https://bitwarden.com/products/send/" }],
+      why: "Sans ces variables, l'app ne démarre pas en local. Avec des clés de test, une erreur ne touche ni les vrais paiements ni les vraies données."
+    },
+    {
+      id: "s9", group: "dev", n: "09", title: "Ajouter Clément comme testeur", dur: "10 min", tag: "Quand un build existe",
+      items: [
+        "TestFlight : ajoute " + cp(EMAIL) + " comme <strong>testeur</strong> (pas comme utilisateur App Store Connect).",
+        "Play Console : ajoute la même adresse à la liste de <strong>tests internes</strong>.",
+        "Si l'app est sur Expo : invite-le dans l'organisation Expo avec le rôle <strong>Developer</strong>."
+      ],
+      fields: [
+        { id: "testers", label: "État", options: ["Fait", "Pas encore de build", "Pas sur les stores pour l'instant"] }
+      ],
+      why: "Il installe les builds sur son téléphone pour vérifier les captures, sans aucun accès aux consoles."
+    }
+  ];
+
+  var DECISIONS = [
+    { id: "d1", q: "Commission marketplace : 0 % ou 4 % ?", def: "On n'en parle pas", choices: ["0 %", "4 %"] },
+    { id: "d2", q: "Âge minimum de l'app", def: "13+, accord parental sous 15 ans", choices: ["16+", "18+"] },
+    { id: "d3", q: "Nom affiché sur les stores", def: "STIZ", choices: [] },
+    { id: "d4", q: "Livraison hors France ?", def: "France uniquement", choices: ["France + Union européenne"] },
+    { id: "d5", q: "Langues au lancement", def: "Français uniquement", choices: ["Français + anglais"] },
+    { id: "d6", q: "Contact support et éditeur", def: "contact@getstiz.com", choices: [] },
+    { id: "d7", q: "Analytique ou suivi actif dans l'app ?", def: "À vérifier avec Louma", choices: ["Aucun suivi", "Oui (préciser l'outil)"] }
+  ];
+
+  // Refuse ce qui ressemble à une clé ou un jeton : la page est partagée, rien de secret n'y entre.
+  var SECRET_RE = /(sk_(live|test)_|rk_(live|test)_|pk_live_|ghp_|gho_|github_pat_|xox[bap]-|AKIA[0-9A-Z]{12}|eyJ[A-Za-z0-9_-]{15,}|service_role|-----BEGIN|password|mot de passe\s*:)/i;
+
+  /* ---------- État ---------- */
+  var LS_KEY = "stiz-setup-v2";
+  var state = { steps: {}, decisions: {} };
+  try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if (saved) state = saved; } catch (e) {}
+  state.steps = state.steps || {}; state.decisions = state.decisions || {};
+
+  // Backend : Google Apps Script (voir apps-script/Code.gs). Sans endpoint, la page marche en local + récap.
+  var CONFIG = {
+    endpoint: "",
+    token: "928a474bd71801084ded637f",
+    contactEmail: "clement@getstiz.com"
+  };
+  var readOnly = false, writeChain = {}, pending = {};
+
+  function persistLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function api(payload) {
+    // text/plain évite la requête préalable CORS, qu'Apps Script ne sait pas traiter.
+    return fetch(CONFIG.endpoint, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (!j.ok) throw new Error(j.error || "error"); return j; });
+  }
+
+  function save(col, id) {
+    persistLocal();
+    if (!CONFIG.endpoint) return;
+    var path = col + "/" + id;
+    var data = state[col][id] ? JSON.parse(JSON.stringify(state[col][id])) : null;
+    pending[path] = (pending[path] || 0) + 1;
+    var prev = writeChain[path] || Promise.resolve();
+    writeChain[path] = prev
+      .then(function () { return api({ token: CONFIG.token, col: col, id: id, data: data }); })
+      .then(function () { setSync("live"); }, function () { setSync("local"); })
+      .then(function () { pending[path]--; });
+  }
+
+  // Fusion serveur / local : la version la plus récente (champ "at") gagne ; ce qui est en cours d'envoi reste local.
+  function merge(remote) {
+    ["steps", "decisions"].forEach(function (col) {
+      var r = remote[col] || {}, l = state[col], out = {};
+      Object.keys(r).forEach(function (id) { out[id] = r[id]; });
+      Object.keys(l).forEach(function (id) {
+        var path = col + "/" + id, newer = !r[id] || (l[id].at || "") > (r[id].at || "");
+        if (pending[path] > 0 || newer) {
+          out[id] = l[id];
+          if (newer && !(pending[path] > 0)) save(col, id);
+        }
+      });
+      state[col] = out;
+    });
+  }
+
+  function fieldVal(sid, fid) { var s = state.steps[sid]; return (s && s.fields && s.fields[fid]) || ""; }
+  function decisionDone(id) { return !!(state.decisions[id] && state.decisions[id].value); }
+  function stepDone(s) {
+    if (s.auto) return DECISIONS.every(function (d) { return decisionDone(d.id); });
+    return !!(state.steps[s.id] && state.steps[s.id].done);
+  }
+
+  /* ---------- Rendu statique (une fois) ---------- */
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function fieldHtml(s, f) {
+    var id = "f-" + s.id + "-" + f.id;
+    var ctl = f.options
+      ? '<select id="' + id + '" data-step="' + s.id + '" data-field="' + f.id + '"><option value="">Choisir…</option>' +
+        f.options.map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + "</option>"; }).join("") + "</select>"
+      : '<input type="text" id="' + id + '" data-step="' + s.id + '" data-field="' + f.id + '" placeholder="' + esc(f.placeholder || "") + '" autocomplete="off" spellcheck="false">';
+    return '<label class="field" for="' + id + '">' + esc(f.label) + ctl + '<span class="field-warn" id="w-' + id + '" hidden></span></label>';
+  }
+
+  function stepHtml(s) {
+    var h = '<article class="step" id="' + s.id + '"><div class="n">' + s.n + '</div>';
+    h += '<div class="step-head"><h3>' + esc(s.title) + '</h3><div class="chips"><span class="chip who">Qui : Louma</span>' +
+      (s.tag ? '<span class="chip">' + s.tag + '</span>' : "") + '<span class="chip">' + s.dur + '</span></div></div>';
+    h += '<div class="step-body"><ol>' + s.items.map(function (i) { return "<li>" + i + "</li>"; }).join("") + "</ol>";
+    if (s.tree) h += '<div class="tree">' + esc(s.tree) + "</div>";
+    if (s.fields) h += '<div class="fields">' + s.fields.map(function (f) { return fieldHtml(s, f); }).join("") + "</div>";
+    if (s.links) h += '<div class="links">' + s.links.map(function (l) { return '<a href="' + l.href + '" target="_blank" rel="noopener">' + esc(l.label) + " ↗</a>"; }).join("") + "</div>";
+    h += '<p class="why">Pourquoi : ' + esc(s.why) + "</p>";
+    if (s.unlocks) h += '<p class="unlocks">' + esc(s.unlocks) + "</p>";
+    if (s.auto) h += '<p class="unlocks" id="' + s.id + '-count"></p>';
+    else h += '<button class="toggle" type="button" id="tg-' + s.id + '" data-toggle="' + s.id + '" aria-pressed="false"><span class="box"></span><span class="lbl">Marquer comme fait</span></button>';
+    return h + "</div></article>";
+  }
+
+  ["stores", "dev"].forEach(function (g) {
+    document.getElementById("steps-" + g).innerHTML = STEPS.filter(function (s) { return s.group === g; }).map(stepHtml).join("");
+  });
+  document.getElementById("h1-count").textContent = STEPS.length;
+
+  var decEl = document.getElementById("decisions");
+  decEl.innerHTML = DECISIONS.map(function (d, i) {
+    var opts = '<button class="opt" type="button" data-dec="' + d.id + '" data-src="default" data-val="' + esc(d.def) + '"><small>Défaut</small>' + esc(d.def) + "</button>";
+    opts += d.choices.map(function (c) { return '<button class="opt" type="button" data-dec="' + d.id + '" data-src="choice" data-val="' + esc(c) + '">' + esc(c) + "</button>"; }).join("");
+    opts += '<button class="opt" type="button" data-dec="' + d.id + '" data-src="custom">Autre…</button>';
+    return '<div class="dec" id="' + d.id + '"><p class="dec-q"><span>' + (i + 1) + "</span>" + esc(d.q) + '</p><div class="opts">' + opts + "</div>" +
+      '<input type="text" id="in-' + d.id + '" placeholder="Ta réponse, puis Entrée" hidden aria-label="Réponse libre : ' + esc(d.q) + '">' +
+      '<span class="field-warn" id="w-in-' + d.id + '" hidden></span>' +
+      '<p class="dec-answer" id="ans-' + d.id + '"></p></div>';
+  }).join("");
+
+  /* ---------- Rendu dynamique ---------- */
+  var syncEl = document.getElementById("sync");
+  var SYNC_LABEL = {
+    wait: "Connexion…",
+    live: "Synchronisé avec Clément",
+    local: "Hors ligne : envoie le récap",
+    readonly: "Lecture seule : envoie le récap"
+  };
+  function setSync(s) { syncEl.dataset.s = s; syncEl.textContent = SYNC_LABEL[s]; }
+
+  function render() {
+    var nSteps = 0;
+    STEPS.forEach(function (s) {
+      var done = stepDone(s);
+      if (done) nSteps++;
+      document.getElementById(s.id).classList.toggle("done", done);
+      var tg = document.getElementById("tg-" + s.id);
+      if (tg) {
+        tg.setAttribute("aria-pressed", String(done));
+        tg.querySelector(".lbl").textContent = done ? "Fait" : "Marquer comme fait";
+        tg.disabled = readOnly;
+      }
+      (s.fields || []).forEach(function (f) {
+        var el = document.getElementById("f-" + s.id + "-" + f.id);
+        if (document.activeElement !== el) el.value = fieldVal(s.id, f.id);
+        el.disabled = readOnly;
+      });
+    });
+    var nDec = DECISIONS.filter(function (d) { return decisionDone(d.id); }).length;
+    document.getElementById("s5-count").textContent = nDec + " / 7 décisions tranchées · se coche toute seule à 7";
+
+    DECISIONS.forEach(function (d) {
+      var cur = state.decisions[d.id];
+      var input = document.getElementById("in-" + d.id);
+      document.querySelectorAll('[data-dec="' + d.id + '"]').forEach(function (b) {
+        var on = !!cur && cur.source === b.dataset.src && (cur.source === "custom" || cur.value === b.dataset.val);
+        b.setAttribute("aria-pressed", String(on));
+        b.disabled = readOnly;
+      });
+      var custom = !!cur && cur.source === "custom";
+      if (custom) input.hidden = false;
+      if (custom && document.activeElement !== input) input.value = cur.value || "";
+      input.disabled = readOnly;
+      document.getElementById("ans-" + d.id).innerHTML = cur && cur.value
+        ? "Réponse : <b>" + esc(cur.value) + "</b>"
+        : "Pas encore de réponse : défaut appliqué (" + esc(d.def) + ")";
+    });
+
+    document.getElementById("progress-label").textContent = nSteps + " / " + STEPS.length + " actions faites · " + nDec + " / 7 décisions";
+    document.getElementById("bar").style.width = (nSteps / STEPS.length * 100) + "%";
+    document.getElementById("recap").textContent = recapText();
+  }
+
+  function recapText() {
+    var lines = ["STIZ · Setup de Clément · " + new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })];
+    [["stores", "FICHES STORES"], ["dev", "ACCÈS AU CODE"]].forEach(function (g) {
+      lines.push("", g[1]);
+      STEPS.filter(function (s) { return s.group === g[0]; }).forEach(function (s) {
+        lines.push((stepDone(s) ? "[x] " : "[ ] ") + s.n + " " + s.title);
+        (s.fields || []).forEach(function (f) {
+          lines.push("    " + f.label + " : " + (fieldVal(s.id, f.id) || "pas encore renseigné"));
+        });
+      });
+    });
+    lines.push("", "DÉCISIONS");
+    DECISIONS.forEach(function (d, i) {
+      var cur = state.decisions[d.id];
+      lines.push((i + 1) + ". " + d.q + " → " + (cur && cur.value ? cur.value : "(défaut) " + d.def));
+    });
+    return lines.join("\n");
+  }
+
+  /* ---------- Interactions ---------- */
+  function stamp(o) { o.at = new Date().toISOString(); return o; }
+
+  // Renvoie true si la valeur ressemble à un secret : on vide le champ et on explique pourquoi.
+  function rejectSecret(el, v) {
+    var w = document.getElementById("w-" + el.id);
+    if (!SECRET_RE.test(v)) { if (w) w.hidden = true; return false; }
+    el.value = "";
+    if (w) { w.textContent = "Ça ressemble à une clé ou un mot de passe : rien n'a été enregistré. Envoie-le par Bitwarden Send ou SMS."; w.hidden = false; }
+    return true;
+  }
+
+  document.querySelector(".wrap").addEventListener("click", function (e) {
+    var tg = e.target.closest("[data-toggle]");
+    if (tg && !readOnly) {
+      var id = tg.dataset.toggle;
+      var cur = state.steps[id] || {};
+      state.steps[id] = stamp(Object.assign({}, cur, { done: !cur.done }));
+      save("steps", id); render();
+    }
+  });
+
+  document.querySelector(".wrap").addEventListener("change", function (e) {
+    var el = e.target;
+    if (!el.dataset.field || readOnly) return;
+    var sid = el.dataset.step, v = el.value.trim();
+    if (rejectSecret(el, v)) return;
+    if (v === fieldVal(sid, el.dataset.field)) return;
+    var cur = state.steps[sid] || {};
+    var fields = Object.assign({}, cur.fields || {});
+    fields[el.dataset.field] = v;
+    state.steps[sid] = stamp(Object.assign({}, cur, { fields: fields }));
+    save("steps", sid); render();
+  });
+
+  decEl.addEventListener("click", function (e) {
+    var b = e.target.closest(".opt");
+    if (!b || readOnly) return;
+    var id = b.dataset.dec, input = document.getElementById("in-" + id);
+    if (b.dataset.src === "custom") {
+      input.hidden = false; input.focus();
+      var prev = state.decisions[id];
+      if (prev && prev.source === "custom") return;
+      document.querySelectorAll('[data-dec="' + id + '"]').forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      return;
+    }
+    input.hidden = true;
+    state.decisions[id] = stamp({ source: b.dataset.src, value: b.dataset.val });
+    save("decisions", id); render();
+  });
+
+  decEl.addEventListener("change", function (e) {
+    if (e.target.tagName !== "INPUT" || readOnly) return;
+    var id = e.target.id.replace("in-", ""), v = e.target.value.trim();
+    if (rejectSecret(e.target, v)) return;
+    var prev = state.decisions[id];
+    if (!v && !(prev && prev.source === "custom")) return;
+    if (prev && prev.source === "custom" && prev.value === v) return;
+    if (v) { state.decisions[id] = stamp({ source: "custom", value: v }); save("decisions", id); }
+    else {
+      delete state.decisions[id];
+      save("decisions", id);
+    }
+    render();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") e.target.blur();
+  });
+
+  function selectText(el) {
+    var r = document.createRange(); r.selectNodeContents(el);
+    var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  document.addEventListener("click", function (e) {
+    var c = e.target.closest(".copy");
+    if (!c) return;
+    function ok() { c.classList.add("copied"); setTimeout(function () { c.classList.remove("copied"); }, 1600); }
+    try { navigator.clipboard.writeText(c.dataset.copy).then(ok, function () { selectText(c); }); } catch (err) { selectText(c); }
+  });
+  var recapBtn = document.getElementById("copy-recap");
+  recapBtn.addEventListener("click", function () {
+    var pre = document.getElementById("recap");
+    try {
+      navigator.clipboard.writeText(recapText()).then(function () {
+        recapBtn.textContent = "Récap copié"; setTimeout(function () { recapBtn.textContent = "Copier le récap"; }, 1800);
+      }, function () { selectText(pre); });
+    } catch (err) { selectText(pre); }
+  });
+
+  render();
+
+  document.getElementById("mail-recap").addEventListener("click", function () {
+    this.href = "mailto:" + CONFIG.contactEmail + "?subject=" + encodeURIComponent("STIZ · Setup Clément") + "&body=" + encodeURIComponent(recapText());
+  });
+
+  /* ---------- Synchro partagée (Google Sheet) ---------- */
+  function pull() {
+    if (!CONFIG.endpoint) { setSync("local"); return; }
+    fetch(CONFIG.endpoint + "?token=" + encodeURIComponent(CONFIG.token))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) throw new Error(j.error);
+        merge(j.state); persistLocal(); setSync("live"); render();
+      })
+      .catch(function () { setSync("local"); });
+  }
+  pull();
+  setInterval(function () { if (!document.hidden) pull(); }, 20000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) pull(); });
+})();
+</script>
+</body>
+</html>
